@@ -129,16 +129,16 @@ def main():
     while running:
         clock.tick(FPS)
         
-    # Obsługa zdarzeń
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and not game_over:
-                dog.jump()
-            if event.key == pygame.K_r and game_over:
-                # Restart gry
-                return main()
+        # Obsługa zdarzeń
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and not game_over:
+                    dog.jump()
+                if event.key == pygame.K_r and game_over:
+                    # Restart gry
+                    return main()
         
         if not game_over:
             # Aktualizacja psa
