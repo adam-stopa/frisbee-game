@@ -1,3 +1,13 @@
+"""Frisbee Game
+
+Prosty projekt gry w Pythonie (Pygame).
+
+Uruchomienie:
+    python game.py
+
+Autor: Adam Stopa (lokalne repo)
+"""
+
 import pygame
 import random
 
