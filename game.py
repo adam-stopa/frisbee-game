@@ -17,7 +17,7 @@ ORANGE = (255, 165, 0)
 BLACK = (0, 0, 0)
 GRAY = (128, 128, 128)
 BLUE = (135, 206, 235)
-GOLD = (171, 128, 0)
+GOLD = (255, 215, 0)
 
 # Utwórz okno
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -43,24 +43,34 @@ def load_image(filename, width=None, height=None):
         print(f"Nie można załadować {filename}, używam prostokąta")
         return None
 
-# Załaduj grafiki
-laura_img = load_image('laura.png', 80, 60)
+# Załaduj grafiki animacji Laury
+laura_run1_img = load_image('laura_run1.png', 80, 60)
+laura_run2_img = load_image('laura_run2.png', 80, 60)
+laura_jump_img = load_image('laura_jump.png', 80, 60)
+
+# Załaduj pozostałe grafiki
 frisbee_img = load_image('frisbee.png', 40, 40)
 tree_img = load_image('tree.png', 50, 70)
 
-# Klasa dla Laury (naszego psa)
+# Klasa dla Laury (naszego psa) z animacją
 class Dog:
     def __init__(self):
         self.width = 80
         self.height = 60
         self.x = 100
-        self.y = SCREEN_HEIGHT - 120 - self.height  # Trawa wyżej (było -150)
+        self.y = SCREEN_HEIGHT - 120 - self.height
         self.velocity_y = 0
         self.is_jumping = False
         self.gravity = 0.8
         self.jump_power = -18
-        self.image = laura_img
         self.ground_level = SCREEN_HEIGHT - 120 - self.height
+        
+        # Animacja
+        self.run_images = [laura_run1_img, laura_run2_img]
+        self.jump_image = laura_jump_img
+        self.current_image = self.run_images[0] if self.run_images[0] else None
+        self.animation_frame = 0
+        self.animation_speed = 8  # Co ile framów zmienia się sprite (mniejsza = szybsza)
         
     def jump(self):
         if not self.is_jumping:
@@ -77,10 +87,23 @@ class Dog:
             self.y = self.ground_level
             self.velocity_y = 0
             self.is_jumping = False
+        
+        # Animacja biegu (tylko gdy nie skacze)
+        if not self.is_jumping:
+            self.animation_frame += 1
+            if self.animation_frame >= self.animation_speed:
+                self.animation_frame = 0
+                # Przełącz między sprite'ami biegu
+                current_index = self.run_images.index(self.current_image) if self.current_image in self.run_images else 0
+                next_index = (current_index + 1) % len(self.run_images)
+                self.current_image = self.run_images[next_index]
+        else:
+            # Gdy skacze, użyj sprite'a skoku
+            self.current_image = self.jump_image
     
     def draw(self, screen):
-        if self.image:
-            screen.blit(self.image, (self.x, self.y))
+        if self.current_image:
+            screen.blit(self.current_image, (self.x, self.y))
         else:
             # Fallback - rysuj prostokąt
             pygame.draw.rect(screen, BROWN, (self.x, self.y, self.width, self.height))
@@ -93,7 +116,6 @@ class Frisbee:
         self.width = 40
         self.height = 40
         self.x = SCREEN_WIDTH
-        # Dostosowane do nowej wysokości trawy
         self.y = random.randint(SCREEN_HEIGHT - 280, SCREEN_HEIGHT - 180)
         self.speed = 5
         self.image = frisbee_img
@@ -116,7 +138,6 @@ class Obstacle:
         self.width = 50
         self.height = random.randint(50, 70)
         self.x = SCREEN_WIDTH
-        # Dostosowane do nowej wysokości trawy
         self.y = SCREEN_HEIGHT - 120 - self.height
         self.speed = 6
         self.image = tree_img
@@ -182,7 +203,7 @@ def main():
                     return main()
         
         if not game_over:
-            # Aktualizacja psa
+            # Aktualizacja psa (z animacją!)
             dog.update()
             
             # Tworzenie frisbee co jakiś czas
@@ -204,7 +225,6 @@ def main():
                 if check_collision(dog, frisbee):
                     frisbees.remove(frisbee)
                     score += 10
-                    # Sprawdź czy nowy rekord
                     if score > high_score:
                         high_score = score
                         new_record = True
@@ -221,9 +241,8 @@ def main():
                     obstacles.remove(obstacle)
         
         # Rysowanie
-        # Tło - niebo i trawa (wyżej - było -100, teraz -120)
         screen.fill(BLUE)
-        pygame.draw.rect(screen, GREEN, (0, SCREEN_HEIGHT - 120, SCREEN_WIDTH, 120))
+        pygame.draw.rect(screen, GREEN, (0, SCREEN_HEIGHT - 130, SCREEN_WIDTH, 130))
         
         # Rysuj wszystkie obiekty
         dog.draw(screen)
@@ -260,7 +279,6 @@ def main():
             screen.blit(restart_text, restart_rect)
             screen.blit(final_score_text, score_rect)
             
-            # Jeśli nowy rekord
             if new_record:
                 record_text = big_font.render("NOWY REKORD!", True, GOLD)
                 record_rect = record_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 10))
