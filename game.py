@@ -23,6 +23,15 @@ GOLD = (255, 215, 0)
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Laura's Frisbee Game")
 
+# Spróbuj ustawić przezroczystość okna (jeśli dostępne: pygame._sdl2)
+try:
+    from pygame import _sdl2
+    win = _sdl2.Window.from_display_module()
+    win.set_opacity(0.9)  # 0.0 = przezroczyste, 1.0 = nieprzezroczyste
+    print("Ustawiono opacity okna na 0.9")
+except Exception as e:
+    print(f"Opacity not supported: {e}")
+
 # Zegar
 clock = pygame.time.Clock()
 FPS = 60
@@ -39,8 +48,8 @@ def load_image(filename, width=None, height=None):
         if width and height:
             image = pygame.transform.scale(image, (width, height))
         return image
-    except:
-        print(f"Nie można załadować {filename}, używam prostokąta")
+    except (FileNotFoundError, pygame.error) as e:
+        print(f"Nie można załadować {filename}: {e}, używam prostokąta")
         return None
 
 # Załaduj grafiki animacji Laury
@@ -87,6 +96,12 @@ class Dog:
             self.y = self.ground_level
             self.velocity_y = 0
             self.is_jumping = False
+        
+        # Sprawdź granice okna (X axis)
+        if self.x < 0:
+            self.x = 0
+        elif self.x + self.width > SCREEN_WIDTH:
+            self.x = SCREEN_WIDTH - self.width
         
         # Animacja biegu (tylko gdy nie skacze)
         if not self.is_jumping:
