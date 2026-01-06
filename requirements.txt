@@ -1,2 +1,4 @@
 pygame==2.6.1
 pytest==7.4.3
+pygame
+pytest
