@@ -1,13 +1,3 @@
-"""Frisbee Game
-
-Prosty projekt gry w Pythonie (Pygame).
-
-Uruchomienie:
-    python game.py
-
-Autor: Adam Stopa (lokalne repo)
-"""
-
 import pygame
 import random
 
@@ -18,232 +8,202 @@ pygame.init()
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
-# Kolory (format RGB)
+# Kolory
 WHITE = (255, 255, 255)
-GREEN = (34, 139, 34)
+GREEN = (100, 200, 100)
 BROWN = (139, 69, 19)
 ORANGE = (255, 165, 0)
 BLACK = (0, 0, 0)
+GRAY = (128, 128, 128)
+BLUE = (135, 206, 235)
 
-# Utwórz okno gry
+# Utwórz okno
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Laura's Frisbee Game")
 
-# Zegar do kontrolowania szybkości gry
+# Zegar
 clock = pygame.time.Clock()
-FPS = 60  # Frames per second (60 klatek na sekundę)
+FPS = 60
 
-# Flaga do zamykania gry
-running = True
-
-# Klasa przeszkody
-class Obstacle(pygame.sprite.Sprite):
-    def __init__(self, x, y, width=60, height=80):
-        super().__init__()
-        self.image = pygame.Surface((width, height))
-        self.image.fill((101, 67, 33))  # Ciemnobrązowy (drewno)
+# Klasa dla Laury (naszego psa)
+class Dog:
+    def __init__(self):
+        self.width = 60
+        self.height = 40
+        self.x = 100
+        self.y = SCREEN_HEIGHT - 150
+        self.velocity_y = 0
+        self.is_jumping = False
+        self.gravity = 0.8
+        self.jump_power = -15
         
-        # Rysuj prostą grafię drzewa
-        pygame.draw.polygon(self.image, (34, 139, 34), [
-            (width // 2, 0),
-            (width, height // 2),
-            (0, height // 2)
-        ])
-        
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.vel_y = 3  # Prędkość opadania
+    def jump(self):
+        if not self.is_jumping:
+            self.velocity_y = self.jump_power
+            self.is_jumping = True
     
     def update(self):
-        self.rect.y += self.vel_y
+        # Grawitacja
+        self.velocity_y += self.gravity
+        self.y += self.velocity_y
+        
+        # Sprawdź czy pies jest na ziemi
+        if self.y >= SCREEN_HEIGHT - 150:
+            self.y = SCREEN_HEIGHT - 150
+            self.velocity_y = 0
+            self.is_jumping = False
     
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
-
-# Klasa frisbee
-class Frisbee(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
-        # Stwórz okrąg (frisbee)
-        self.image = pygame.Surface((30, 30), pygame.SRCALPHA)
-        pygame.draw.circle(self.image, ORANGE, (15, 15), 15)
-        pygame.draw.circle(self.image, (255, 200, 0), (15, 15), 12)
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        
-        # Lekko opada
-        self.vel_y = 0
-        self.gravity = 0.3
-    
-    def update(self):
-        # Fizyka — frisbee opada
-        self.vel_y += self.gravity
-        self.rect.y += self.vel_y
-        
-        # Jeśli frisbee wyleci poza ekran, zrespawnuj je
-        if self.rect.y > SCREEN_HEIGHT:
-            self.respawn()
-    
-    def respawn(self):
-        """Zrespawnuj frisbee w losowej pozycji u góry"""
-        self.rect.x = random.randint(0, SCREEN_WIDTH - 30)
-        self.rect.y = random.randint(-200, -50)
-        self.vel_y = 0
-    
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
-
-# Klasa gracza (Laura)
-class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
-        # Narysuj prostego psa (kreskówkę)
-        self.image = pygame.Surface((50, 50), pygame.SRCALPHA)
-        
-        # Ciało (brązowy prostokąt)
-        pygame.draw.ellipse(self.image, BROWN, (10, 20, 35, 25))
-        
-        # Głowa (koło)
-        pygame.draw.circle(self.image, BROWN, (38, 18), 12)
-        
-        # Ucho
-        pygame.draw.polygon(self.image, (139, 69, 19), [
-            (35, 5),
-            (42, 0),
-            (40, 12)
-        ])
-        
-        # Oczy
-        pygame.draw.circle(self.image, BLACK, (42, 15), 2)
-        pygame.draw.circle(self.image, WHITE, (43, 14), 1)
-        
-        # Nos
-        pygame.draw.circle(self.image, BLACK, (45, 18), 2)
-        
+    def draw(self, screen):
+        # Ciało psa (brązowy prostokąt)
+        pygame.draw.rect(screen, BROWN, (self.x, self.y, self.width, self.height))
+        # Głowa
+        pygame.draw.circle(screen, BROWN, (self.x + self.width, self.y + 10), 15)
         # Ogon
-        pygame.draw.line(self.image, BROWN, (15, 22), (5, 10), 3)
-        
-        # Nogi
-        pygame.draw.line(self.image, (101, 67, 33), (20, 45), (20, 48), 3)
-        pygame.draw.line(self.image, (101, 67, 33), (30, 45), (30, 48), 3)
-        pygame.draw.line(self.image, (101, 67, 33), (40, 45), (40, 48), 3)
-        
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        
-        self.vel_x = 0
-        self.vel_y = 0
+        pygame.draw.line(screen, BROWN, (self.x, self.y + 20), (self.x - 15, self.y + 10), 5)
+
+# Klasa dla frisbee
+class Frisbee:
+    def __init__(self):
+        self.radius = 15
+        self.x = SCREEN_WIDTH
+        self.y = random.randint(100, SCREEN_HEIGHT - 200)
         self.speed = 5
         
-        self.is_jumping = False
-        self.vel_y_jump = 0
-        self.gravity = 0.6
-    
     def update(self):
-        keys = pygame.key.get_pressed()
+        self.x -= self.speed
         
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.rect.x -= self.speed
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.rect.x += self.speed
+    def draw(self, screen):
+        pygame.draw.circle(screen, ORANGE, (self.x, self.y), self.radius)
         
-        if keys[pygame.K_SPACE] and not self.is_jumping:
-            self.is_jumping = True
-            self.vel_y_jump = -15
+    def is_off_screen(self):
+        return self.x < -self.radius * 2
+
+# Klasa dla przeszkód
+class Obstacle:
+    def __init__(self):
+        self.width = 30
+        self.height = random.randint(40, 80)
+        self.x = SCREEN_WIDTH
+        self.y = SCREEN_HEIGHT - 100 - self.height
+        self.speed = 6
         
-        if self.is_jumping:
-            self.vel_y_jump += self.gravity
-            self.rect.y += self.vel_y_jump
-            
-            if self.rect.y >= SCREEN_HEIGHT - 100:
-                self.rect.y = SCREEN_HEIGHT - 100
-                self.is_jumping = False
-                self.vel_y_jump = 0
+    def update(self):
+        self.x -= self.speed
         
-        if not self.is_jumping:
-            self.rect.y = SCREEN_HEIGHT - 100
+    def draw(self, screen):
+        # Drzewo (brązowy pień + zielona korona)
+        pygame.draw.rect(screen, BROWN, (self.x, self.y, self.width, self.height))
+        pygame.draw.circle(screen, GREEN, (self.x + self.width//2, self.y - 20), 25)
         
-        if self.rect.x < 0:
-            self.rect.x = 0
-        if self.rect.x > SCREEN_WIDTH - self.rect.width:
-            self.rect.x = SCREEN_WIDTH - self.rect.width
+    def is_off_screen(self):
+        return self.x < -self.width
+
+# Funkcja sprawdzająca kolizję
+def check_collision(dog, obj):
+    dog_rect = pygame.Rect(dog.x, dog.y, dog.width, dog.height)
     
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
-
-# Utwórz Laurę
-player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100)
-
-# Utwórz frisbee
-frisbee = Frisbee(random.randint(0, SCREEN_WIDTH - 30), random.randint(-200, -50))
-
-# Lista przeszkód
-obstacles = []
-
-# Zmienne gry
-score = 0
-font = pygame.font.Font(None, 36)
-obstacle_spawn_timer = 0
-
-# Główna pętla gry
-while running:
-    clock.tick(FPS)
+    if isinstance(obj, Frisbee):
+        obj_rect = pygame.Rect(obj.x - obj.radius, obj.y - obj.radius, 
+                               obj.radius * 2, obj.radius * 2)
+    else:  # Obstacle
+        obj_rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
     
+    return dog_rect.colliderect(obj_rect)
+
+# Główna funkcja gry
+def main():
+    dog = Dog()
+    frisbees = []
+    obstacles = []
+    score = 0
+    running = True
+    game_over = False
+    
+    # Liczniki do tworzenia obiektów
+    frisbee_timer = 0
+    obstacle_timer = 0
+    
+    # Czcionka do wyświetlania tekstu
+    font = pygame.font.Font(None, 36)
+    
+    while running:
+        clock.tick(FPS)
+        
     # Obsługa zdarzeń
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    
-    # Aktualizuj gracza i frisbee
-    player.update()
-    frisbee.update()
-    
-    # Spawn przeszkód co 60 klatek (co 1 sekundę przy 60 FPS)
-    obstacle_spawn_timer += 1
-    if obstacle_spawn_timer > 80:
-        new_obstacle = Obstacle(random.randint(0, SCREEN_WIDTH - 60), -80)
-        obstacles.append(new_obstacle)
-        obstacle_spawn_timer = 0
-    
-    # Aktualizuj przeszkody
-    for obstacle in obstacles:
-        obstacle.update()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and not game_over:
+                dog.jump()
+            if event.key == pygame.K_r and game_over:
+                # Restart gry
+                return main()
         
-        # Sprawdź kolizję z graczem
-        if player.rect.colliderect(obstacle.rect):
-            print(f"Game Over! Final Score: {score}")
-            running = False
+        if not game_over:
+            # Aktualizacja psa
+            dog.update()
+            
+            # Tworzenie frisbee co jakiś czas
+            frisbee_timer += 1
+            if frisbee_timer > 120:  # Co 2 sekundy
+                frisbees.append(Frisbee())
+                frisbee_timer = 0
+            
+            # Tworzenie przeszkód
+            obstacle_timer += 1
+            if obstacle_timer > 90:  # Co 1.5 sekundy
+                obstacles.append(Obstacle())
+                obstacle_timer = 0
+            
+            # Aktualizacja frisbee
+            for frisbee in frisbees[:]:
+                frisbee.update()
+                
+                # Sprawdź kolizję z psem
+                if check_collision(dog, frisbee):
+                    frisbees.remove(frisbee)
+                    score += 10
+                elif frisbee.is_off_screen():
+                    frisbees.remove(frisbee)
+            
+            # Aktualizacja przeszkód
+            for obstacle in obstacles[:]:
+                obstacle.update()
+                
+                # Sprawdź kolizję z psem
+                if check_collision(dog, obstacle):
+                    game_over = True
+                elif obstacle.is_off_screen():
+                    obstacles.remove(obstacle)
+        
+        # Rysowanie
+        # Tło - niebo i trawa
+        screen.fill(BLUE)
+        pygame.draw.rect(screen, GREEN, (0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100))
+        
+        # Rysuj wszystkie obiekty
+        dog.draw(screen)
+        
+        for frisbee in frisbees:
+            frisbee.draw(screen)
+        
+        for obstacle in obstacles:
+            obstacle.draw(screen)
+        
+        # Wyświetl punkty
+        score_text = font.render(f"Score: {score}", True, BLACK)
+        screen.blit(score_text, (10, 10))
+        
+        # Game Over
+        if game_over:
+            game_over_text = font.render("GAME OVER! Press R to restart", True, BLACK)
+            text_rect = game_over_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+            screen.blit(game_over_text, text_rect)
+        
+        pygame.display.flip()
     
-    # Usuń przeszkody, które wyjechały poza ekran
-    obstacles = [obs for obs in obstacles if obs.rect.y < SCREEN_HEIGHT]
-    
-    # Sprawdź kolizję (czy Laura złapała frisbee)
-    if player.rect.colliderect(frisbee.rect):
-        score += 1
-        frisbee.respawn()
-    
-    # Tło
-    screen.fill(GREEN)
-    
-    # Rysuj ziemię
-    pygame.draw.rect(screen, (139, 90, 43), (0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100))
-    
-    # Rysuj gracza, frisbee i przeszkody
-    player.draw(screen)
-    frisbee.draw(screen)
-    
-    for obstacle in obstacles:
-        obstacle.draw(screen)
-    
-    # Rysuj wynik
-    score_text = font.render(f"Score: {score}", True, BLACK)
-    screen.blit(score_text, (10, 10))
-    
-    # Aktualizuj ekran
-    pygame.display.flip()
+    pygame.quit()
 
-# Zamknij grę
-pygame.quit()
+if __name__ == "__main__":
+    main()
